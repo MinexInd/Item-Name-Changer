@@ -43,9 +43,10 @@ public class ResetItemCommand {
         }
         
         boolean hadCustomName = ItemModifier.hasCustomName(heldItem);
-        
-        if (!hadCustomName) {
-            context.getSource().sendFeedback(Text.literal("This item doesn't have a custom name!")
+        boolean hadLore = ItemModifier.hasLore(heldItem);
+
+        if (!hadCustomName && !hadLore) {
+            context.getSource().sendFeedback(Text.literal("This item doesn't have a custom name or lore!")
                 .formatted(Formatting.YELLOW));
             return 0;
         }
@@ -55,7 +56,7 @@ public class ResetItemCommand {
         // Remove from storage
         ItemDataStorage.removeItem(heldItem);
         
-        context.getSource().sendFeedback(Text.literal("Successfully reset item name!")
+        context.getSource().sendFeedback(Text.literal("Successfully reset item name and lore!")
             .formatted(Formatting.GREEN));
         
         return 1;

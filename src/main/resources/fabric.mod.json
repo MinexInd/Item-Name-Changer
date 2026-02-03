@@ -13,15 +13,11 @@
 	"icon": "assets/item-name-changer/icon.png",
 	"environment": "client",
 	"entrypoints": {
-		"main": [
-			"net.minex.customname.ItemNameChanger"
-		],
 		"client": [
 			"net.minex.customname.ItemNameChangerClient"
 		]
 	},
 	"mixins": [
-		"item-name-changer.mixins.json",
 		{
 			"config": "item-name-changer.client.mixins.json",
 			"environment": "client"

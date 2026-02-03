@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.CustomModelDataComponent;
 import net.minecraft.item.ItemStack;
 import net.minex.customname.ItemNameChanger;
 
@@ -13,6 +15,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,10 +28,17 @@ public class ItemDataStorage {
     
     public static class ItemData {
         public String displayName;
+        public java.util.List<String> loreLines;
         public long timestamp;
         
         public ItemData(String displayName) {
             this.displayName = displayName;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public ItemData(String displayName, java.util.List<String> loreLines) {
+            this.displayName = displayName;
+            this.loreLines = loreLines;
             this.timestamp = System.currentTimeMillis();
         }
         
@@ -50,23 +60,22 @@ public class ItemDataStorage {
         StringBuilder keyBuilder = new StringBuilder();
         keyBuilder.append(stack.getItem().toString());
         keyBuilder.append("_");
-        keyBuilder.append(stack.getCount());
-        
+
         // Include item components for unique identification (excluding custom ones)
         int componentsHash = 0;
-        
-        // Get the item's damage/durability if it has any
-        if (stack.isDamageable()) {
-            componentsHash += stack.getDamage();
-        }
         
         // Get the item's enchantments if any
         if (stack.hasEnchantments()) {
             componentsHash += stack.getEnchantments().toString().hashCode();
         }
-        
+
         // Add other non-custom components to make items more unique
         componentsHash += stack.getItem().hashCode();
+
+        CustomModelDataComponent customModelData = stack.get(DataComponentTypes.CUSTOM_MODEL_DATA);
+        if (customModelData != null) {
+            componentsHash += customModelData.value();
+        }
         
         keyBuilder.append("_");
         keyBuilder.append(Math.abs(componentsHash));
@@ -82,9 +91,37 @@ public class ItemDataStorage {
         if (itemKey == null) return;
         
         String fullKey = getCurrentWorldKey() + ":" + itemKey;
-        STORED_ITEMS.put(fullKey, new ItemData(displayName));
+        ItemData existing = STORED_ITEMS.get(fullKey);
+        if (existing == null) {
+            existing = new ItemData(displayName);
+            STORED_ITEMS.put(fullKey, existing);
+        } else {
+            existing.displayName = displayName;
+            existing.timestamp = System.currentTimeMillis();
+        }
         
         // Save to disk asynchronously
+        saveDataAsync();
+    }
+
+    /**
+     * Store lore lines for the current world
+     */
+    public static void storeLore(ItemStack stack, java.util.List<String> loreLines) {
+        String itemKey = generateItemKey(stack);
+        if (itemKey == null) return;
+
+        String fullKey = getCurrentWorldKey() + ":" + itemKey;
+        ItemData existing = STORED_ITEMS.get(fullKey);
+        java.util.List<String> copiedLore = loreLines == null ? null : new ArrayList<>(loreLines);
+        if (existing == null) {
+            existing = new ItemData(null, copiedLore);
+            STORED_ITEMS.put(fullKey, existing);
+        } else {
+            existing.loreLines = copiedLore;
+            existing.timestamp = System.currentTimeMillis();
+        }
+
         saveDataAsync();
     }
     
@@ -109,6 +146,26 @@ public class ItemDataStorage {
         String fullKey = getCurrentWorldKey() + ":" + itemKey;
         STORED_ITEMS.remove(fullKey);
         
+        saveDataAsync();
+    }
+
+    /**
+     * Remove only lore data for the current item
+     */
+    public static void removeLore(ItemStack stack) {
+        String itemKey = generateItemKey(stack);
+        if (itemKey == null) return;
+
+        String fullKey = getCurrentWorldKey() + ":" + itemKey;
+        ItemData data = STORED_ITEMS.get(fullKey);
+        if (data == null) return;
+
+        data.loreLines = null;
+        data.timestamp = System.currentTimeMillis();
+        if (data.displayName == null) {
+            STORED_ITEMS.remove(fullKey);
+        }
+
         saveDataAsync();
     }
     

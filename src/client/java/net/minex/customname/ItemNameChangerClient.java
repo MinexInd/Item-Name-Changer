@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minex.customname.command.CustomNameCommand;
 import net.minex.customname.command.HelpCommand;
+import net.minex.customname.command.LoreCommand;
 import net.minex.customname.command.ResetItemCommand;
 import net.minex.customname.command.RestoreCommand;
 import net.minex.customname.storage.ItemDataStorage;
@@ -16,6 +17,7 @@ public class ItemNameChangerClient implements ClientModInitializer {
 		// Register client-side commands
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 			CustomNameCommand.register(dispatcher);
+			LoreCommand.register(dispatcher);
 			ResetItemCommand.register(dispatcher);
 			RestoreCommand.register(dispatcher);
 			HelpCommand.register(dispatcher);

@@ -1,6 +1,5 @@
 package net.minex.customname.mixin.client;
 
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minex.customname.storage.ItemDataStorage;
@@ -22,9 +21,17 @@ public class ClientPlayerInventoryMixin {
         
         // Check if this item should have custom name restored
         ItemDataStorage.ItemData storedData = ItemDataStorage.getStoredItem(stack);
-        if (storedData != null && storedData.displayName != null && !ItemModifier.hasCustomName(stack)) {
+        if (storedData == null) {
+            return;
+        }
+
+        if (storedData.displayName != null && ItemModifier.isCustomNameDifferent(stack, storedData.displayName)) {
             // Restore the item's custom name
             ItemModifier.setDisplayName(stack, storedData.displayName);
+        }
+
+        if (storedData.loreLines != null && ItemModifier.isLoreDifferent(stack, storedData.loreLines)) {
+            ItemModifier.setLoreLines(stack, storedData.loreLines);
         }
     }
 }

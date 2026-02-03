@@ -82,9 +82,13 @@ public class InventorySyncManager {
         if (storedData == null) return;
         
         // Check if display name needs restoration
-        if (storedData.displayName != null && !ItemModifier.hasCustomName(stack)) {
+        if (storedData.displayName != null && ItemModifier.isCustomNameDifferent(stack, storedData.displayName)) {
             // Restore the item's custom name
             ItemModifier.setDisplayName(stack, storedData.displayName);
+        }
+
+        if (storedData.loreLines != null && ItemModifier.isLoreDifferent(stack, storedData.loreLines)) {
+            ItemModifier.setLoreLines(stack, storedData.loreLines);
         }
     }
     
@@ -126,12 +130,18 @@ public class InventorySyncManager {
         ItemDataStorage.ItemData storedData = ItemDataStorage.getStoredItem(stack);
         if (storedData == null) return false;
         
+        boolean restored = false;
         if (storedData.displayName != null) {
             ItemModifier.setDisplayName(stack, storedData.displayName);
-            return true;
+            restored = true;
+        }
+
+        if (storedData.loreLines != null) {
+            ItemModifier.setLoreLines(stack, storedData.loreLines);
+            restored = true;
         }
         
-        return false;
+        return restored;
     }
     
     /**

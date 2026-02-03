@@ -37,6 +37,16 @@ public class HelpCommand {
             .formatted(Formatting.AQUA)
             .append(Text.literal(" - Rename the item in your main hand")
                 .formatted(Formatting.WHITE)));
+
+        context.getSource().sendFeedback(Text.literal("  /customname lore add \"<line>\"")
+            .formatted(Formatting.AQUA)
+            .append(Text.literal(" - Add a lore line to the item in your main hand")
+                .formatted(Formatting.WHITE)));
+
+        context.getSource().sendFeedback(Text.literal("  /customname lore clear")
+            .formatted(Formatting.AQUA)
+            .append(Text.literal(" - Clear all lore lines from the item in your main hand")
+                .formatted(Formatting.WHITE)));
                 
         context.getSource().sendFeedback(Text.literal("  /customname reset")
             .formatted(Formatting.AQUA)
@@ -53,14 +63,24 @@ public class HelpCommand {
         context.getSource().sendFeedback(Text.literal("Examples:")
             .formatted(Formatting.YELLOW, Formatting.UNDERLINE));
             
-        context.getSource().sendFeedback(Text.literal("  /customname \"§cMy Cool Sword\"")
+        context.getSource().sendFeedback(Text.literal("  /customname \"&cMy Cool Sword\"")
             .formatted(Formatting.GREEN)
             .append(Text.literal(" - Red colored name")
                 .formatted(Formatting.GRAY)));
                 
-        context.getSource().sendFeedback(Text.literal("  /customname \"§l§6Golden Blade\"")
+        context.getSource().sendFeedback(Text.literal("  /customname \"&l&6Golden Blade\"")
             .formatted(Formatting.GREEN)
             .append(Text.literal(" - Bold golden name")
+                .formatted(Formatting.GRAY)));
+
+        context.getSource().sendFeedback(Text.literal("  /customname lore add \"&7Slayer of &cZombies\"")
+            .formatted(Formatting.GREEN)
+            .append(Text.literal(" - Adds a formatted lore line")
+                .formatted(Formatting.GRAY)));
+
+        context.getSource().sendFeedback(Text.literal("  /customname \"&#567FABHex Name\"")
+            .formatted(Formatting.GREEN)
+            .append(Text.literal(" - Hex color example")
                 .formatted(Formatting.GRAY)));
                 
         context.getSource().sendFeedback(Text.literal(""));
@@ -71,7 +91,10 @@ public class HelpCommand {
         context.getSource().sendFeedback(Text.literal("• Rename items with any display name")
             .formatted(Formatting.WHITE));
             
-        context.getSource().sendFeedback(Text.literal("• Supports color codes and formatting")
+        context.getSource().sendFeedback(Text.literal("• Supports & formatting codes, hex colors, keybinds, and translations")
+            .formatted(Formatting.WHITE));
+
+        context.getSource().sendFeedback(Text.literal("• Supports lore lines with the same formatting rules")
             .formatted(Formatting.WHITE));
             
         context.getSource().sendFeedback(Text.literal("• Persistent storage across sessions")
