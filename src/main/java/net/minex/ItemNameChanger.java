@@ -1,4 +1,4 @@
-package net.minex.customname;
+package net.minex;
 
 import net.fabricmc.api.ModInitializer;
 
@@ -19,6 +19,6 @@ public class ItemNameChanger implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		LOGGER.info("Item Name Changer mod initialized! Use /customname to rename items.");
+		LOGGER.info("Hello Fabric world!");
 	}
 }

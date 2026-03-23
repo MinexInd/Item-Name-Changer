@@ -1,10 +1,9 @@
 {
 	"required": true,
-	"package": "net.minex.customname.mixin.client",
+	"package": "net.minex.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ClientPlayerInventoryMixin",
-		"ClientPlayNetworkHandlerMixin"
+		"ExampleClientMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
