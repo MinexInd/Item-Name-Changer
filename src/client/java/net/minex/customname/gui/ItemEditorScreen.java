@@ -1,7 +1,6 @@
 package net.minex.customname.gui;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -250,8 +249,7 @@ public class ItemEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
-        double mx = click.x(), my = click.y();
+    public boolean mouseClicked(double mx, double my, int button) {
         int fx = panelX + PAD;
 
         // Toggle buttons
@@ -290,7 +288,7 @@ public class ItemEditorScreen extends Screen {
             }
         }
 
-        return super.mouseClicked(click, doubled);
+        return super.mouseClicked(mx, my, button);
     }
 
     private boolean hit(double mx, double my, ButtonWidget btn) {
