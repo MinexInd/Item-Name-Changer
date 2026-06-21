@@ -26,6 +26,7 @@ public class ItemEditorScreen extends Screen {
     private static final int MAX_LORE = 30;
     private static final int LORE_VISIBLE = 5;
     private static final int LORE_ROW_H = 24;
+    private static final int PANEL_W = 380;
 
     private static final Formatting[] COLORS = {
         Formatting.BLACK, Formatting.DARK_BLUE, Formatting.DARK_GREEN, Formatting.DARK_AQUA,
@@ -40,7 +41,7 @@ public class ItemEditorScreen extends Screen {
     private boolean dataLoaded = false;
 
     // Layout
-    private int leftW;
+    private int panelX;
     private int innerW;
     private int contentH;
     private int startY;
@@ -58,7 +59,9 @@ public class ItemEditorScreen extends Screen {
     // Color hover
     private int colorHover = -1;
 
-    // Layout coords for left panel
+    // Layout coords
+    private int previewY;
+    private int previewH;
     private int nameFieldY;
     private int loreLabelY;
     private int loreAreaY;
@@ -69,10 +72,10 @@ public class ItemEditorScreen extends Screen {
     private int paletteY;
     private int bottomBtnY;
 
-    // Inline format buttons (drawn manually so they never steal focus)
+    // Inline format buttons
     private static final String[] FMT_CODES  = {"&l", "&o", "&n", "&m", "&k", "&r"};
     private static final String[] FMT_LABELS = {"§lB", "§oI", "§nU", "§mS", "§kO", "r"};
-    private int fmtBtnX, fmtBtnY; // top-left of first format button
+    private int fmtBtnX, fmtBtnY;
 
     public ItemEditorScreen(Screen parent, ItemStack itemStack) {
         super(Text.literal("Item Editor"));
@@ -89,12 +92,26 @@ public class ItemEditorScreen extends Screen {
             dataLoaded = true;
         }
 
-        leftW = width / 2;
-        innerW = leftW - PAD * 2;
-        int fx = PAD;
+        panelX = (width - PANEL_W) / 2;
+        innerW = PANEL_W - PAD * 2;
+        int fx = panelX + PAD;
+
+        // Calculate preview height dynamically
+        String dn = nameField != null ? nameField.getText() : savedNameText;
+        if (dn == null) dn = "";
+        int previewLines = 0;
+        if (!dn.isEmpty() || !loreLines.isEmpty()) previewLines = 1;
+        previewH = 28 + Math.max(previewLines, 0) * 12;
+        for (LoreLine ll : loreLines) {
+            String lt = (ll.field != null && !ll.field.getText().isEmpty()) ? ll.field.getText() : ll.savedText;
+            if (lt != null && !lt.isEmpty()) previewH += 12;
+        }
+        if (previewH < 40) previewH = 40;
 
         // Calculate heights
-        int rNameField = 24;
+        int rPreview = 28;
+        int rPreviewEnd = rPreview + previewH + 8;
+        int rNameField = rPreviewEnd + 4;
         int rLoreLabel = rNameField + 28;
         int rLoreArea = rLoreLabel + 14;
         int visibleLore = Math.min(Math.max(loreLines.size(), 1), LORE_VISIBLE);
@@ -108,6 +125,7 @@ public class ItemEditorScreen extends Screen {
         contentH = rBottomBtn + 30;
         startY = Math.max(0, (height - contentH) / 2);
 
+        previewY = startY + rPreview;
         nameFieldY = startY + rNameField;
         loreLabelY = startY + rLoreLabel;
         loreAreaY = startY + rLoreArea;
@@ -131,7 +149,7 @@ public class ItemEditorScreen extends Screen {
         ButtonWidget addBtn = ButtonWidget.builder(Text.literal("+ Add Lore Line"), b -> addLoreLine()).dimensions(fx, addBtnY, 120, 20).build();
         addDrawableChild(addBtn);
 
-        // Format buttons are drawn manually (no ButtonWidget = no focus theft)
+        // Format buttons
         fmtBtnX = fx + 150;
         fmtBtnY = paletteY;
 
@@ -159,7 +177,6 @@ public class ItemEditorScreen extends Screen {
     private void insertCode(String code) {
         if (lastFocusedField != null) {
             lastFocusedField.write(code);
-            // Restore focus so the user can keep typing immediately
             setFocused(lastFocusedField);
             lastFocusedField.setFocused(true);
         }
@@ -178,7 +195,7 @@ public class ItemEditorScreen extends Screen {
             if (ll.removeBtn != null) { super.remove(ll.removeBtn); ll.removeBtn = null; }
         }
 
-        int fx = PAD;
+        int fx = panelX + PAD;
         int rmW = 18;
         int fieldW = innerW - rmW - 4;
 
@@ -220,7 +237,7 @@ public class ItemEditorScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double hAmt, double vAmt) {
-        int fx = PAD;
+        int fx = panelX + PAD;
         if (mx >= fx && mx <= fx + innerW && my >= loreAreaY && my <= loreAreaEndY) {
             if (vAmt < 0 && loreScroll < loreLines.size() - LORE_VISIBLE) {
                 saveAllText(); loreScroll++; buildLoreWidgets(); return true;
@@ -235,16 +252,16 @@ public class ItemEditorScreen extends Screen {
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
         double mx = click.x(), my = click.y();
-        int fx = PAD;
+        int fx = panelX + PAD;
 
-        // Color palette (handled manually — no focus theft)
+        // Color palette
         int palW = COLS * (COL_SW + COL_GAP);
         if (mx >= fx && mx < fx + palW && my >= paletteY && my < paletteY + 2 * (COL_SW + COL_GAP)) {
             pickColor(mx, my, fx, paletteY);
             return true;
         }
 
-        // Format buttons (handled manually — no focus theft)
+        // Format buttons
         for (int i = 0; i < FMT_CODES.length; i++) {
             int bx = fmtBtnX + i * 20;
             if (mx >= bx && mx < bx + 18 && my >= fmtBtnY && my < fmtBtnY + 18) {
@@ -284,14 +301,19 @@ public class ItemEditorScreen extends Screen {
 
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        int fx = PAD;
+        int fx = panelX + PAD;
 
-        // Left Panel Background
-        ctx.fill(0, 0, leftW, height, 0xF010101C);
-        ctx.fill(leftW - 2, 0, leftW, height, 0xFF4444CC); // divider
+        // Panel Background
+        ctx.fill(panelX, 0, panelX + PANEL_W, height, 0xF010101C);
+        // Border lines
+        ctx.fill(panelX, 0, panelX + 1, height, 0xFF4444CC);
+        ctx.fill(panelX + PANEL_W - 1, 0, panelX + PANEL_W, height, 0xFF4444CC);
 
         // Title
-        ctx.drawCenteredTextWithShadow(textRenderer, "§l§fItem Editor", leftW / 2, startY - 12, 0xFFFFFFFF);
+        ctx.drawCenteredTextWithShadow(textRenderer, "§l§fItem Editor", panelX + PANEL_W / 2, startY - 12, 0xFFFFFFFF);
+
+        // ===== LIVE PREVIEW =====
+        renderPreview(ctx);
 
         // ===== NAME SECTION =====
         ctx.drawTextWithShadow(textRenderer, "§bName", fx, nameFieldY - 12, 0xFF88BBFF);
@@ -304,7 +326,7 @@ public class ItemEditorScreen extends Screen {
         ctx.fill(fx, loreAreaEndY - 1, fx + innerW, loreAreaEndY, 0xFF333355);
 
         if (loreLines.isEmpty()) {
-            ctx.drawCenteredTextWithShadow(textRenderer, "§8No lore lines yet", leftW / 2, loreAreaY + loreAreaH / 2 - 4, 0xFF555555);
+            ctx.drawCenteredTextWithShadow(textRenderer, "§8No lore lines yet", panelX + PANEL_W / 2, loreAreaY + loreAreaH / 2 - 4, 0xFF555555);
         }
 
         for (LoreLine ll : loreLines) {
@@ -325,7 +347,7 @@ public class ItemEditorScreen extends Screen {
         ctx.drawTextWithShadow(textRenderer, "§7Insert Color Code:", fx, paletteLabelY, 0xFF888888);
         drawPalette(ctx, fx, paletteY, mouseX, mouseY);
 
-        // Format buttons (drawn manually so they never steal focus)
+        // Format buttons
         ctx.drawTextWithShadow(textRenderer, "§7Style:", fmtBtnX, paletteLabelY, 0xFF888888);
         for (int i = 0; i < FMT_CODES.length; i++) {
             int bx = fmtBtnX + i * 20;
@@ -337,9 +359,6 @@ public class ItemEditorScreen extends Screen {
             ctx.fill(bx + 17, fmtBtnY, bx + 18, fmtBtnY + 18, 0xFF555555);
             ctx.drawCenteredTextWithShadow(textRenderer, FMT_LABELS[i], bx + 9, fmtBtnY + 5, 0xFFFFFFFF);
         }
-
-        // ===== RIGHT PANEL (PREVIEW) =====
-        renderPreview(ctx);
 
         super.render(ctx, mouseX, mouseY, delta);
 
@@ -355,15 +374,15 @@ public class ItemEditorScreen extends Screen {
     }
 
     private void renderPreview(DrawContext ctx) {
-        int prX = leftW + PAD;
-        int prY = height / 2 - 60;
-        
+        int prX = panelX + PAD;
+        int prY = previewY;
+        int prW = innerW;
+
         ctx.drawTextWithShadow(textRenderer, "§bLive Preview", prX, prY - 16, 0xFF88BBFF);
-        
-        // Let's render like a tooltip
+
         String dn = nameField.getText().isEmpty() ? strip(itemStack.getName().getString()) : nameField.getText();
-        dn = dn.replace("&", "§"); // Convert & to § for rendering preview
-        
+        dn = dn.replace("&", "§");
+
         List<String> renderedLore = new ArrayList<>();
         for (LoreLine ll : loreLines) {
             String lt = (ll.field != null && !ll.field.getText().isEmpty()) ? ll.field.getText() : ll.savedText;
@@ -371,28 +390,26 @@ public class ItemEditorScreen extends Screen {
                 renderedLore.add(lt.replace("&", "§"));
             }
         }
-        
+
         int tooltipH = 28 + renderedLore.size() * 12;
-        int tooltipW = textRenderer.getWidth(dn) + 32; // 32 to leave space for item icon
-        for (String l : renderedLore) {
-            int w = textRenderer.getWidth(l) + 8;
-            if (w > tooltipW) tooltipW = w;
-        }
+        int tooltipW = prW;
 
+        // Background
         ctx.fill(prX, prY, prX + tooltipW, prY + tooltipH, 0xDD100010);
-        // Draw Border manually
-        ctx.fill(prX - 1, prY - 1, prX + tooltipW + 1, prY, 0xFF3300AA); // Top
-        ctx.fill(prX - 1, prY + tooltipH, prX + tooltipW + 1, prY + tooltipH + 1, 0xFF3300AA); // Bottom
-        ctx.fill(prX - 1, prY, prX, prY + tooltipH, 0xFF3300AA); // Left
-        ctx.fill(prX + tooltipW, prY, prX + tooltipW + 1, prY + tooltipH, 0xFF3300AA); // Right
+        // Border
+        ctx.fill(prX - 1, prY - 1, prX + tooltipW + 1, prY, 0xFF3300AA);
+        ctx.fill(prX - 1, prY + tooltipH, prX + tooltipW + 1, prY + tooltipH + 1, 0xFF3300AA);
+        ctx.fill(prX - 1, prY, prX, prY + tooltipH, 0xFF3300AA);
+        ctx.fill(prX + tooltipW, prY, prX + tooltipW + 1, prY + tooltipH, 0xFF3300AA);
 
-        // Draw item icon
+        // Item icon
         ctx.drawItem(itemStack, prX + 4, prY + 4);
 
-        // Draw name text (shifted right to account for 16x16 item icon + 4px padding)
+        // Name text
         ctx.drawText(textRenderer, CustomNameManager.createStyledText(dn), prX + 24, prY + 8, 0xFFFFFFFF, false);
 
-        int lpY = prY + 24; // shifted down to account for the icon height
+        // Lore lines
+        int lpY = prY + 24;
         for (int i = 0; i < renderedLore.size(); i++) {
             ctx.drawText(textRenderer, CustomNameManager.createStyledText(renderedLore.get(i)), prX + 4, lpY + i * 12, 0xFFFFFFFF, false);
         }
@@ -486,10 +503,7 @@ public class ItemEditorScreen extends Screen {
 
         var cn = itemStack.get(net.minecraft.component.DataComponentTypes.CUSTOM_NAME);
         if (cn != null) {
-            String raw = cn.getString(); // Note: if the text had siblings with styling, original logic lost it anyway.
-            // Actually, in previous code, `cn.getString()` returns plain text without § if we don't have stored. 
-            // So we just load plain string. 
-            // Wait, previous code used `parseFmt(raw)` and `strip(raw)`. 
+            String raw = cn.getString();
             savedNameText = strip(raw);
         }
         var lc = itemStack.get(net.minecraft.component.DataComponentTypes.LORE);
