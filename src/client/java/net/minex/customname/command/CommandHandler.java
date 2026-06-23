@@ -7,7 +7,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import net.minex.customname.core.CustomNameManager;
 import net.minex.customname.matching.ItemFingerprint;
@@ -35,7 +35,7 @@ public class CommandHandler {
                     .executes(ctx -> {
                         var stack = CustomNameManager.getHeldItem();
                         if (stack.isEmpty()) {
-                            ctx.getSource().sendFeedback(Text.literal("No item in hand!"));
+                            ctx.getSource().sendFeedback(Component.literal("No item in hand!"));
                             return 0;
                         }
 
@@ -49,9 +49,9 @@ public class CommandHandler {
                             if (stored.lore != null && !stored.lore.isEmpty()) {
                                 CustomNameManager.applyLore(stack, stored.lore);
                             }
-                            ctx.getSource().sendFeedback(Text.literal("Item restored."));
+                            ctx.getSource().sendFeedback(Component.literal("Item restored."));
                         } else {
-                            ctx.getSource().sendFeedback(Text.literal("No stored data for this item."));
+                            ctx.getSource().sendFeedback(Component.literal("No stored data for this item."));
                         }
 
                         return 1;
@@ -60,7 +60,7 @@ public class CommandHandler {
                 .then(ClientCommandManager.literal("restoreall")
                     .executes(ctx -> {
                         CustomNameManager.restoreAllItems();
-                        ctx.getSource().sendFeedback(Text.literal("All items restored."));
+                        ctx.getSource().sendFeedback(Component.literal("All items restored."));
                         return 1;
                     })
                 )
@@ -70,7 +70,7 @@ public class CommandHandler {
 
                         var stack = CustomNameManager.getHeldItem();
                         if (stack.isEmpty()) {
-                            ctx.getSource().sendFeedback(Text.literal("No item in hand!"));
+                            ctx.getSource().sendFeedback(Component.literal("No item in hand!"));
                             return 0;
                         }
 
@@ -86,7 +86,7 @@ public class CommandHandler {
                         }
                         StorageManager.setItem(fp, stored);
 
-                        ctx.getSource().sendFeedback(Text.literal("Renamed to: " + name));
+                        ctx.getSource().sendFeedback(Component.literal("Renamed to: " + name));
                         return 1;
                     })
                 )

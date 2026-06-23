@@ -1,11 +1,11 @@
 package net.minex.customname.matching;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ItemEnchantmentsComponent;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Holder;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,15 +20,15 @@ public class ItemFingerprint {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append(Registries.ITEM.getId(stack.getItem()));
+        sb.append(BuiltInRegistries.ITEM.getKey(stack.getItem()));
 
-        ItemEnchantmentsComponent enchants = stack.get(DataComponentTypes.ENCHANTMENTS);
-        if (enchants != null && !enchants.getEnchantments().isEmpty()) {
+        ItemEnchantments enchants = stack.get(DataComponents.ENCHANTMENTS);
+        if (enchants != null && !enchants.keySet().isEmpty()) {
             List<String> entries = new ArrayList<>();
-            for (RegistryEntry<Enchantment> entry : enchants.getEnchantments()) {
+            for (Holder<Enchantment> entry : enchants.keySet()) {
                 int level = enchants.getLevel(entry);
-                entry.getKey().ifPresent(key -> {
-                    entries.add(key.getValue() + ":" + level);
+                entry.unwrapKey().ifPresent(key -> {
+                    entries.add(key.identifier() + ":" + level);
                 });
             }
             entries.sort(Comparator.naturalOrder());

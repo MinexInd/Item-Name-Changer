@@ -1,14 +1,14 @@
 package net.minex.customname.gui;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minex.customname.core.CustomNameManager;
 import net.minex.customname.matching.ItemFingerprint;
 import net.minex.customname.storage.StorageManager;
@@ -28,11 +28,11 @@ public class ItemEditorScreen extends Screen {
     private static final int LORE_ROW_H = 24;
     private static final int PANEL_W = 380;
 
-    private static final Formatting[] COLORS = {
-        Formatting.BLACK, Formatting.DARK_BLUE, Formatting.DARK_GREEN, Formatting.DARK_AQUA,
-        Formatting.DARK_RED, Formatting.DARK_PURPLE, Formatting.GOLD, Formatting.GRAY,
-        Formatting.DARK_GRAY, Formatting.BLUE, Formatting.GREEN, Formatting.AQUA,
-        Formatting.RED, Formatting.LIGHT_PURPLE, Formatting.YELLOW, Formatting.WHITE
+    private static final ChatFormatting[] COLORS = {
+        ChatFormatting.BLACK, ChatFormatting.DARK_BLUE, ChatFormatting.DARK_GREEN, ChatFormatting.DARK_AQUA,
+        ChatFormatting.DARK_RED, ChatFormatting.DARK_PURPLE, ChatFormatting.GOLD, ChatFormatting.GRAY,
+        ChatFormatting.DARK_GRAY, ChatFormatting.BLUE, ChatFormatting.GREEN, ChatFormatting.AQUA,
+        ChatFormatting.RED, ChatFormatting.LIGHT_PURPLE, ChatFormatting.YELLOW, ChatFormatting.WHITE
     };
 
     private final Screen parent;
@@ -47,10 +47,10 @@ public class ItemEditorScreen extends Screen {
     private int startY;
 
     // Name
-    private TextFieldWidget nameField;
+    private EditBox nameField;
     private String savedNameText = "";
     private int focusedTicks = 0;
-    private TextFieldWidget lastFocusedField = null;
+    private EditBox lastFocusedField = null;
 
     // Lore
     private final List<LoreLine> loreLines = new ArrayList<>();
@@ -78,7 +78,7 @@ public class ItemEditorScreen extends Screen {
     private int fmtBtnX, fmtBtnY;
 
     public ItemEditorScreen(Screen parent, ItemStack itemStack) {
-        super(Text.literal("Item Editor"));
+        super(Component.literal("Item Editor"));
         this.parent = parent;
         this.itemStack = itemStack.copy();
         this.fingerprint = ItemFingerprint.getFingerprint(this.itemStack);
@@ -86,7 +86,7 @@ public class ItemEditorScreen extends Screen {
 
     @Override
     protected void init() {
-        clearChildren();
+        clearWidgets();
         if (!dataLoaded) {
             loadFromStorage();
             dataLoaded = true;
@@ -97,13 +97,13 @@ public class ItemEditorScreen extends Screen {
         int fx = panelX + PAD;
 
         // Calculate preview height dynamically
-        String dn = nameField != null ? nameField.getText() : savedNameText;
+        String dn = nameField != null ? nameField.getValue() : savedNameText;
         if (dn == null) dn = "";
         int previewLines = 0;
         if (!dn.isEmpty() || !loreLines.isEmpty()) previewLines = 1;
         previewH = 28 + Math.max(previewLines, 0) * 12;
         for (LoreLine ll : loreLines) {
-            String lt = (ll.field != null && !ll.field.getText().isEmpty()) ? ll.field.getText() : ll.savedText;
+            String lt = (ll.field != null && !ll.field.getValue().isEmpty()) ? ll.field.getValue() : ll.savedText;
             if (lt != null && !lt.isEmpty()) previewH += 12;
         }
         if (previewH < 40) previewH = 40;
@@ -137,17 +137,17 @@ public class ItemEditorScreen extends Screen {
         bottomBtnY = startY + rBottomBtn;
 
         // Name field
-        nameField = new TextFieldWidget(textRenderer, fx + 1, nameFieldY + 1, innerW - 2, 18, Text.empty());
+        nameField = new EditBox(font, fx + 1, nameFieldY + 1, innerW - 2, 18, Component.empty());
         nameField.setMaxLength(255);
-        nameField.setDrawsBackground(false);
-        if (!savedNameText.isEmpty()) nameField.setText(savedNameText);
-        addSelectableChild(nameField);
+        nameField.setBordered(false);
+        if (!savedNameText.isEmpty()) nameField.setValue(savedNameText);
+        addWidget(nameField);
 
         buildLoreWidgets();
 
         // Add Lore button
-        ButtonWidget addBtn = ButtonWidget.builder(Text.literal("+ Add Lore Line"), b -> addLoreLine()).dimensions(fx, addBtnY, 120, 20).build();
-        addDrawableChild(addBtn);
+        Button addBtn = Button.builder(Component.literal("+ Add Lore Line"), b -> addLoreLine()).bounds(fx, addBtnY, 120, 20).build();
+        addRenderableWidget(addBtn);
 
         // Format buttons
         fmtBtnX = fx + 150;
@@ -157,12 +157,12 @@ public class ItemEditorScreen extends Screen {
         int bw = 80;
         int totalBw = bw * 3 + 12;
         int bx = fx + (innerW - totalBw) / 2;
-        ButtonWidget applyBtn = ButtonWidget.builder(Text.literal("Apply").formatted(Formatting.GREEN), b -> apply()).dimensions(bx, bottomBtnY, bw, 22).build();
-        ButtonWidget cancelBtn = ButtonWidget.builder(Text.literal("Cancel"), b -> close()).dimensions(bx + bw + 6, bottomBtnY, bw, 22).build();
-        ButtonWidget rstBtn = ButtonWidget.builder(Text.literal("Reset").formatted(Formatting.RED), b -> reset()).dimensions(bx + (bw + 6) * 2, bottomBtnY, bw, 22).build();
-        addDrawableChild(applyBtn);
-        addDrawableChild(cancelBtn);
-        addDrawableChild(rstBtn);
+        Button applyBtn = Button.builder(Component.literal("Apply").withStyle(ChatFormatting.GREEN), b -> apply()).bounds(bx, bottomBtnY, bw, 22).build();
+        Button cancelBtn = Button.builder(Component.literal("Cancel"), b -> onClose()).bounds(bx + bw + 6, bottomBtnY, bw, 22).build();
+        Button rstBtn = Button.builder(Component.literal("Reset").withStyle(ChatFormatting.RED), b -> reset()).bounds(bx + (bw + 6) * 2, bottomBtnY, bw, 22).build();
+        addRenderableWidget(applyBtn);
+        addRenderableWidget(cancelBtn);
+        addRenderableWidget(rstBtn);
     }
 
     @Override
@@ -176,23 +176,23 @@ public class ItemEditorScreen extends Screen {
 
     private void insertCode(String code) {
         if (lastFocusedField != null) {
-            lastFocusedField.write(code);
+            lastFocusedField.insertText(code);
             setFocused(lastFocusedField);
             lastFocusedField.setFocused(true);
         }
     }
 
     private void saveAllText() {
-        if (nameField != null) savedNameText = nameField.getText();
+        if (nameField != null) savedNameText = nameField.getValue();
         for (LoreLine ll : loreLines) {
-            if (ll.field != null) ll.savedText = ll.field.getText();
+            if (ll.field != null) ll.savedText = ll.field.getValue();
         }
     }
 
     private void buildLoreWidgets() {
         for (LoreLine ll : loreLines) {
-            if (ll.field != null) { super.remove(ll.field); ll.field = null; }
-            if (ll.removeBtn != null) { super.remove(ll.removeBtn); ll.removeBtn = null; }
+            if (ll.field != null) { super.removeWidget(ll.field); ll.field = null; }
+            if (ll.removeBtn != null) { super.removeWidget(ll.removeBtn); ll.removeBtn = null; }
         }
 
         int fx = panelX + PAD;
@@ -206,15 +206,15 @@ public class ItemEditorScreen extends Screen {
 
             int y = loreAreaY + 2 + vi * LORE_ROW_H;
 
-            ll.field = new TextFieldWidget(textRenderer, fx + 1, y, fieldW, 18, Text.empty());
+            ll.field = new EditBox(font, fx + 1, y, fieldW, 18, Component.empty());
             ll.field.setMaxLength(255);
-            ll.field.setDrawsBackground(false);
-            if (!ll.savedText.isEmpty()) ll.field.setText(ll.savedText);
-            addSelectableChild(ll.field);
+            ll.field.setBordered(false);
+            if (!ll.savedText.isEmpty()) ll.field.setValue(ll.savedText);
+            addWidget(ll.field);
 
             int bx = fx + fieldW + 4;
-            ll.removeBtn = ButtonWidget.builder(Text.literal("§cX"), btn -> removeLoreLine(ll.index)).dimensions(bx, y, rmW, 18).build();
-            addDrawableChild(ll.removeBtn);
+            ll.removeBtn = Button.builder(Component.literal("§cX"), btn -> removeLoreLine(ll.index)).bounds(bx, y, rmW, 18).build();
+            addRenderableWidget(ll.removeBtn);
         }
     }
 
@@ -250,7 +250,7 @@ public class ItemEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         double mx = click.x(), my = click.y();
         int fx = panelX + PAD;
 
@@ -287,7 +287,7 @@ public class ItemEditorScreen extends Screen {
         }
     }
 
-    private char getColorCode(Formatting f) {
+    private char getColorCode(ChatFormatting f) {
         return switch (f) {
             case BLACK -> '0'; case DARK_BLUE -> '1'; case DARK_GREEN -> '2'; case DARK_AQUA -> '3';
             case DARK_RED -> '4'; case DARK_PURPLE -> '5'; case GOLD -> '6'; case GRAY -> '7';
@@ -300,7 +300,7 @@ public class ItemEditorScreen extends Screen {
     // ========== RENDER ==========
 
     @Override
-    public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
         int fx = panelX + PAD;
 
         // Panel Background
@@ -310,23 +310,23 @@ public class ItemEditorScreen extends Screen {
         ctx.fill(panelX + PANEL_W - 1, 0, panelX + PANEL_W, height, 0xFF4444CC);
 
         // Title
-        ctx.drawCenteredTextWithShadow(textRenderer, "§l§fItem Editor", panelX + PANEL_W / 2, startY - 12, 0xFFFFFFFF);
+        ctx.drawCenteredString(font, "§l§fItem Editor", panelX + PANEL_W / 2, startY - 12, 0xFFFFFFFF);
 
         // ===== LIVE PREVIEW =====
         renderPreview(ctx);
 
         // ===== NAME SECTION =====
-        ctx.drawTextWithShadow(textRenderer, "§bName", fx, nameFieldY - 12, 0xFF88BBFF);
+        ctx.drawString(font, "§bName", fx, nameFieldY - 12, 0xFF88BBFF);
         drawFieldBg(ctx, nameField);
 
         // ===== LORE SECTION =====
-        ctx.drawTextWithShadow(textRenderer, "§bLore §8(" + loreLines.size() + " lines)", fx, loreLabelY, 0xFF88BBFF);
+        ctx.drawString(font, "§bLore §8(" + loreLines.size() + " lines)", fx, loreLabelY, 0xFF88BBFF);
         ctx.fill(fx, loreAreaY, fx + innerW, loreAreaEndY, 0xFF141420);
         ctx.fill(fx, loreAreaY, fx + innerW, loreAreaY + 1, 0xFF333355);
         ctx.fill(fx, loreAreaEndY - 1, fx + innerW, loreAreaEndY, 0xFF333355);
 
         if (loreLines.isEmpty()) {
-            ctx.drawCenteredTextWithShadow(textRenderer, "§8No lore lines yet", panelX + PANEL_W / 2, loreAreaY + loreAreaH / 2 - 4, 0xFF555555);
+            ctx.drawCenteredString(font, "§8No lore lines yet", panelX + PANEL_W / 2, loreAreaY + loreAreaH / 2 - 4, 0xFF555555);
         }
 
         for (LoreLine ll : loreLines) {
@@ -344,11 +344,11 @@ public class ItemEditorScreen extends Screen {
         }
 
         // Palette
-        ctx.drawTextWithShadow(textRenderer, "§7Insert Color Code:", fx, paletteLabelY, 0xFF888888);
+        ctx.drawString(font, "§7Insert Color Code:", fx, paletteLabelY, 0xFF888888);
         drawPalette(ctx, fx, paletteY, mouseX, mouseY);
 
         // Format buttons
-        ctx.drawTextWithShadow(textRenderer, "§7Style:", fmtBtnX, paletteLabelY, 0xFF888888);
+        ctx.drawString(font, "§7Style:", fmtBtnX, paletteLabelY, 0xFF888888);
         for (int i = 0; i < FMT_CODES.length; i++) {
             int bx = fmtBtnX + i * 20;
             boolean hovered = mouseX >= bx && mouseX < bx + 18 && mouseY >= fmtBtnY && mouseY < fmtBtnY + 18;
@@ -357,7 +357,7 @@ public class ItemEditorScreen extends Screen {
             ctx.fill(bx, fmtBtnY + 17, bx + 18, fmtBtnY + 18, 0xFF555555);
             ctx.fill(bx, fmtBtnY, bx + 1, fmtBtnY + 18, 0xFF555555);
             ctx.fill(bx + 17, fmtBtnY, bx + 18, fmtBtnY + 18, 0xFF555555);
-            ctx.drawCenteredTextWithShadow(textRenderer, FMT_LABELS[i], bx + 9, fmtBtnY + 5, 0xFFFFFFFF);
+            ctx.drawCenteredString(font, FMT_LABELS[i], bx + 9, fmtBtnY + 5, 0xFFFFFFFF);
         }
 
         super.render(ctx, mouseX, mouseY, delta);
@@ -368,24 +368,24 @@ public class ItemEditorScreen extends Screen {
         // Tooltip
         if (colorHover >= 0) {
             String cn = COLORS[colorHover].getName() + " (&" + getColorCode(COLORS[colorHover]) + ")";
-            ctx.fill(mouseX + 10, mouseY - 14, mouseX + 16 + textRenderer.getWidth(cn), mouseY - 2, 0xEE000000);
-            ctx.drawTextWithShadow(textRenderer, cn, mouseX + 13, mouseY - 12, 0xFFFFFFFF);
+            ctx.fill(mouseX + 10, mouseY - 14, mouseX + 16 + font.width(cn), mouseY - 2, 0xEE000000);
+            ctx.drawString(font, cn, mouseX + 13, mouseY - 12, 0xFFFFFFFF);
         }
     }
 
-    private void renderPreview(DrawContext ctx) {
+    private void renderPreview(GuiGraphics ctx) {
         int prX = panelX + PAD;
         int prY = previewY;
         int prW = innerW;
 
-        ctx.drawTextWithShadow(textRenderer, "§bLive Preview", prX, prY - 16, 0xFF88BBFF);
+        ctx.drawString(font, "§bLive Preview", prX, prY - 16, 0xFF88BBFF);
 
-        String dn = nameField.getText().isEmpty() ? strip(itemStack.getName().getString()) : nameField.getText();
+        String dn = nameField.getValue().isEmpty() ? strip(itemStack.getHoverName().getString()) : nameField.getValue();
         dn = dn.replace("&", "§");
 
         List<String> renderedLore = new ArrayList<>();
         for (LoreLine ll : loreLines) {
-            String lt = (ll.field != null && !ll.field.getText().isEmpty()) ? ll.field.getText() : ll.savedText;
+            String lt = (ll.field != null && !ll.field.getValue().isEmpty()) ? ll.field.getValue() : ll.savedText;
             if (!lt.isEmpty()) {
                 renderedLore.add(lt.replace("&", "§"));
             }
@@ -403,35 +403,35 @@ public class ItemEditorScreen extends Screen {
         ctx.fill(prX + tooltipW, prY, prX + tooltipW + 1, prY + tooltipH, 0xFF3300AA);
 
         // Item icon
-        ctx.drawItem(itemStack, prX + 4, prY + 4);
+        ctx.renderItem(itemStack, prX + 4, prY + 4);
 
         // Name text
-        ctx.drawText(textRenderer, CustomNameManager.createStyledText(dn), prX + 24, prY + 8, 0xFFFFFFFF, false);
+        ctx.drawString(font, CustomNameManager.createStyledText(dn), prX + 24, prY + 8, 0xFFFFFFFF, false);
 
         // Lore lines
         int lpY = prY + 24;
         for (int i = 0; i < renderedLore.size(); i++) {
-            ctx.drawText(textRenderer, CustomNameManager.createStyledText(renderedLore.get(i)), prX + 4, lpY + i * 12, 0xFFFFFFFF, false);
+            ctx.drawString(font, CustomNameManager.createStyledText(renderedLore.get(i)), prX + 4, lpY + i * 12, 0xFFFFFFFF, false);
         }
     }
 
-    private void renderCustomTextFields(DrawContext ctx) {
+    private void renderCustomTextFields(GuiGraphics ctx) {
         // Name field
         if (nameField != null) {
             int textY = nameField.getY() + 5;
-            String text = nameField.getText();
+            String text = nameField.getValue();
             if (!text.isEmpty() || nameField.isFocused()) {
                 int color = nameField.isFocused() ? 0xFFE0E0E0 : 0xFFAAAAAA;
-                ctx.drawText(textRenderer, text, nameField.getX() + 4, textY, color, false);
+                ctx.drawString(font, text, nameField.getX() + 4, textY, color, false);
             }
             if (nameField.isFocused() && (focusedTicks / 6) % 2 == 0) {
-                int cursorPos = nameField.getCursor();
+                int cursorPos = nameField.getCursorPosition();
                 String textBeforeCursor = text.substring(0, Math.min(cursorPos, text.length()));
-                int cx = nameField.getX() + 4 + textRenderer.getWidth(textBeforeCursor);
+                int cx = nameField.getX() + 4 + font.width(textBeforeCursor);
                 ctx.fill(cx, nameField.getY() + 4, cx + 1, nameField.getY() + 14, 0xFFFFFFFF);
             }
             if (text.isEmpty() && !nameField.isFocused()) {
-                ctx.drawTextWithShadow(textRenderer, "§7Type item name...", nameField.getX() + 4, textY, 0xFF555555);
+                ctx.drawString(font, "§7Type item name...", nameField.getX() + 4, textY, 0xFF555555);
             }
         }
 
@@ -439,24 +439,24 @@ public class ItemEditorScreen extends Screen {
         for (LoreLine ll : loreLines) {
             if (ll.field == null) continue;
             int ly = ll.field.getY() + 5;
-            String text = ll.field.getText();
+            String text = ll.field.getValue();
             if (!text.isEmpty() || ll.field.isFocused()) {
                 int color = ll.field.isFocused() ? 0xFFE0E0E0 : 0xFFAAAAAA;
-                ctx.drawText(textRenderer, text, ll.field.getX() + 4, ly, color, false);
+                ctx.drawString(font, text, ll.field.getX() + 4, ly, color, false);
             }
             if (ll.field.isFocused() && (focusedTicks / 6) % 2 == 0) {
-                int cursorPos = ll.field.getCursor();
+                int cursorPos = ll.field.getCursorPosition();
                 String textBeforeCursor = text.substring(0, Math.min(cursorPos, text.length()));
-                int cx = ll.field.getX() + 4 + textRenderer.getWidth(textBeforeCursor);
+                int cx = ll.field.getX() + 4 + font.width(textBeforeCursor);
                 ctx.fill(cx, ll.field.getY() + 4, cx + 1, ll.field.getY() + 14, 0xFFFFFFFF);
             }
             if (text.isEmpty() && !ll.field.isFocused()) {
-                ctx.drawTextWithShadow(textRenderer, "§7Line " + (ll.index + 1) + "...", ll.field.getX() + 4, ly, 0xFF555555);
+                ctx.drawString(font, "§7Line " + (ll.index + 1) + "...", ll.field.getX() + 4, ly, 0xFF555555);
             }
         }
     }
 
-    private void drawFieldBg(DrawContext ctx, TextFieldWidget field) {
+    private void drawFieldBg(GuiGraphics ctx, EditBox field) {
         int x = field.getX() - 2;
         int y = field.getY() - 2;
         int w = field.getWidth() + 4;
@@ -468,7 +468,7 @@ public class ItemEditorScreen extends Screen {
         ctx.fill(x + w - 1, y, x + w, y + h, 0xFF555555);
     }
 
-    private void drawPalette(DrawContext ctx, int sx, int sy, int mx, int my) {
+    private void drawPalette(GuiGraphics ctx, int sx, int sy, int mx, int my) {
         colorHover = -1;
         for (int i = 0; i < COLORS.length; i++) {
             int c = i % COLS, r = i / COLS;
@@ -501,12 +501,12 @@ public class ItemEditorScreen extends Screen {
             return;
         }
 
-        var cn = itemStack.get(net.minecraft.component.DataComponentTypes.CUSTOM_NAME);
+        var cn = itemStack.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME);
         if (cn != null) {
             String raw = cn.getString();
             savedNameText = strip(raw);
         }
-        var lc = itemStack.get(net.minecraft.component.DataComponentTypes.LORE);
+        var lc = itemStack.get(net.minecraft.core.component.DataComponents.LORE);
         if (lc != null) {
             for (int i = 0; i < lc.lines().size(); i++) {
                 LoreLine ll = new LoreLine(i);
@@ -517,13 +517,13 @@ public class ItemEditorScreen extends Screen {
     }
 
     private void apply() {
-        MinecraftClient cl = MinecraftClient.getInstance();
-        if (cl.player == null) { close(); return; }
-        ItemStack held = cl.player.getMainHandStack();
-        if (held.isEmpty()) { close(); return; }
+        Minecraft cl = Minecraft.getInstance();
+        if (cl.player == null) { onClose(); return; }
+        ItemStack held = cl.player.getMainHandItem();
+        if (held.isEmpty()) { onClose(); return; }
 
         String fp = ItemFingerprint.getFingerprint(held);
-        String nt = nameField.getText().trim();
+        String nt = nameField.getValue().trim();
 
         if (!nt.isEmpty()) {
             String fmt = nt.replace("&", "§");
@@ -532,30 +532,30 @@ public class ItemEditorScreen extends Screen {
 
         List<String> fl = new ArrayList<>();
         for (LoreLine ll : loreLines) {
-            String t = ll.field != null ? ll.field.getText().trim() : ll.savedText.trim();
+            String t = ll.field != null ? ll.field.getValue().trim() : ll.savedText.trim();
             if (!t.isEmpty()) fl.add(t.replace("&", "§"));
         }
         if (!fl.isEmpty()) CustomNameManager.applyLore(fl);
 
         String store = nt.isEmpty() ? null : nt.replace("&", "§");
         StorageManager.storeItem(fp, store, fl.isEmpty() ? null : fl);
-        close();
+        onClose();
     }
 
     private void reset() {
-        MinecraftClient cl = MinecraftClient.getInstance();
-        if (cl.player == null) { close(); return; }
-        ItemStack held = cl.player.getMainHandStack();
-        if (held.isEmpty()) { close(); return; }
+        Minecraft cl = Minecraft.getInstance();
+        if (cl.player == null) { onClose(); return; }
+        ItemStack held = cl.player.getMainHandItem();
+        if (held.isEmpty()) { onClose(); return; }
         CustomNameManager.resetName();
         CustomNameManager.resetLore();
         StorageManager.removeItem(ItemFingerprint.getFingerprint(held));
-        close();
+        onClose();
     }
 
     private static String strip(String t) { return t == null ? "" : t.replaceAll("§.", ""); }
 
-    private static int colVal(Formatting f) {
+    private static int colVal(ChatFormatting f) {
         return switch (f) {
             case BLACK -> 0x000000; case DARK_BLUE -> 0x0000AA; case DARK_GREEN -> 0x00AA00;
             case DARK_AQUA -> 0x00AAAA; case DARK_RED -> 0xAA0000; case DARK_PURPLE -> 0xAA00AA;
@@ -567,13 +567,13 @@ public class ItemEditorScreen extends Screen {
     }
 
     @Override
-    public void close() { if (client != null) client.setScreen(parent); }
+    public void onClose() { if (minecraft != null) minecraft.setScreen(parent); }
 
     private static class LoreLine {
         int index;
         String savedText = "";
-        TextFieldWidget field;
-        ButtonWidget removeBtn;
+        EditBox field;
+        Button removeBtn;
 
         LoreLine(int index) { this.index = index; }
     }

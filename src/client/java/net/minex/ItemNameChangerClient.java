@@ -2,7 +2,7 @@ package net.minex;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 import net.minex.customname.core.CustomNameManager;
 import net.minex.customname.storage.StorageManager;
@@ -23,15 +23,15 @@ public class ItemNameChangerClient implements ClientModInitializer {
 		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
 	}
 
-	private void onClientTick(MinecraftClient client) {
+	private void onClientTick(Minecraft client) {
 		if (client.player == null) {
 			return;
 		}
 
-		while (ModKeyBindings.OPEN_GUI.wasPressed()) {
+		while (ModKeyBindings.OPEN_GUI.consumeClick()) {
 			var stack = CustomNameManager.getHeldItem();
 			if (!stack.isEmpty()) {
-				client.setScreen(new ItemEditorScreen(client.currentScreen, stack));
+				client.setScreen(new ItemEditorScreen(client.screen, stack));
 			}
 		}
 	}

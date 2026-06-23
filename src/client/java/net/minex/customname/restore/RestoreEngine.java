@@ -1,9 +1,9 @@
 package net.minex.customname.restore;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 import net.minex.customname.core.CustomNameManager;
 import net.minex.customname.matching.ItemFingerprint;
@@ -14,7 +14,7 @@ import java.util.List;
 
 public class RestoreEngine {
 
-    private static final MinecraftClient client = MinecraftClient.getInstance();
+    private static final Minecraft client = Minecraft.getInstance();
     private static int inventorySlotCursor = 9;
     private static int tickCounter = 0;
 
@@ -38,10 +38,10 @@ public class RestoreEngine {
     }
 
     private static void restoreHotbar() {
-        PlayerInventory inv = client.player.getInventory();
+        Inventory inv = client.player.getInventory();
         if (inv == null) return;
         for (int i = 0; i < 9; i++) {
-            restoreItem(inv.getStack(i));
+            restoreItem(inv.getItem(i));
         }
     }
 
@@ -50,10 +50,10 @@ public class RestoreEngine {
             inventorySlotCursor = 9;
         }
 
-        PlayerInventory inv = client.player.getInventory();
+        Inventory inv = client.player.getInventory();
         if (inv == null) return;
 
-        restoreItem(inv.getStack(inventorySlotCursor));
+        restoreItem(inv.getItem(inventorySlotCursor));
         inventorySlotCursor++;
     }
 

@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -24,10 +24,10 @@ public class StorageManager {
             return;
         }
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
-        if (client.getCurrentServerEntry() != null) {
-            currentServerId = client.getCurrentServerEntry().address;
+        if (client.getCurrentServer() != null) {
+            currentServerId = client.getCurrentServer().ip;
         } else {
             currentServerId = "singleplayer";
         }
