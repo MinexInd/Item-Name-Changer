@@ -1,15 +1,15 @@
-package net.minex;
+package net.minex.itemnamechanger;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.Minecraft;
 
-import net.minex.customname.core.CustomNameManager;
-import net.minex.customname.storage.StorageManager;
-import net.minex.customname.restore.RestoreEngine;
-import net.minex.customname.command.CommandHandler;
-import net.minex.customname.keybinding.ModKeyBindings;
-import net.minex.customname.gui.ItemEditorScreen;
+import net.minex.itemnamechanger.core.CustomNameManager;
+import net.minex.itemnamechanger.storage.StorageManager;
+import net.minex.itemnamechanger.restore.RestoreEngine;
+import net.minex.itemnamechanger.command.CommandHandler;
+import net.minex.itemnamechanger.keybinding.ModKeyBindings;
+import net.minex.itemnamechanger.gui.ItemEditorScreen;
 
 public class ItemNameChangerClient implements ClientModInitializer {
 	@Override
@@ -18,7 +18,7 @@ public class ItemNameChangerClient implements ClientModInitializer {
 		RestoreEngine.init();
 		CommandHandler.register();
 
-		KeyBindingHelper.registerKeyBinding(ModKeyBindings.OPEN_GUI);
+		KeyMappingHelper.registerKeyMapping(ModKeyBindings.OPEN_GUI);
 
 		net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
 	}

@@ -1,18 +1,18 @@
-package net.minex.customname.command;
+package net.minex.itemnamechanger.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 import net.minecraft.network.chat.Component;
 
-import net.minex.customname.core.CustomNameManager;
-import net.minex.customname.matching.ItemFingerprint;
-import net.minex.customname.storage.StorageManager;
-import net.minex.customname.storage.StoredItem;
+import net.minex.itemnamechanger.core.CustomNameManager;
+import net.minex.itemnamechanger.matching.ItemFingerprint;
+import net.minex.itemnamechanger.storage.StorageManager;
+import net.minex.itemnamechanger.storage.StoredItem;
 
 import java.util.ArrayList;
 
@@ -30,8 +30,8 @@ public class CommandHandler {
     private static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher) {
 
         dispatcher.register(
-            ClientCommandManager.literal("customname")
-                .then(ClientCommandManager.literal("restore")
+            ClientCommands.literal("customname")
+                .then(ClientCommands.literal("restore")
                     .executes(ctx -> {
                         var stack = CustomNameManager.getHeldItem();
                         if (stack.isEmpty()) {
@@ -57,14 +57,14 @@ public class CommandHandler {
                         return 1;
                     })
                 )
-                .then(ClientCommandManager.literal("restoreall")
+                .then(ClientCommands.literal("restoreall")
                     .executes(ctx -> {
                         CustomNameManager.restoreAllItems();
                         ctx.getSource().sendFeedback(Component.literal("All items restored."));
                         return 1;
                     })
                 )
-                .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                .then(ClientCommands.argument("name", StringArgumentType.greedyString())
                     .executes(ctx -> {
                         String name = StringArgumentType.getString(ctx, "name");
 

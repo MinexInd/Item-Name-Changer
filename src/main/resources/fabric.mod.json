@@ -3,7 +3,7 @@
 	"id": "item-name-changer",
 	"version": "${version}",
 	"name": "Item Name Changer",
-	"description": "A lightweight client-sided mod that lets players rename items through simple commands. Perfect for survival, creative, and minigame servers!",
+	"description": "A lightweight client-sided mod that lets players rename items through simple commands.",
 	"authors": [
 		"MinexInd!"
 	],
@@ -12,10 +12,10 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.minex.ItemNameChanger"
+			"net.minex.itemnamechanger.ItemNameChanger"
 		],
 		"client": [
-			"net.minex.ItemNameChangerClient"
+			"net.minex.itemnamechanger.ItemNameChangerClient"
 		]
 	},
 	"mixins": [
@@ -26,9 +26,9 @@
 		}
 	],
 	"depends": {
-		"fabricloader": ">=0.18.4",
-		"minecraft": "~1.21.11",
-		"java": ">=21",
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1",
+		"java": ">=25",
 		"fabric-api": "*"
 	}
 }

@@ -1,4 +1,4 @@
-package net.minex.customname.storage;
+package net.minex.itemnamechanger.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

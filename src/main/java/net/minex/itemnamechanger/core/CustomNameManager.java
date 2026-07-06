@@ -1,4 +1,4 @@
-package net.minex.customname.core;
+package net.minex.itemnamechanger.core;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
@@ -14,9 +14,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.minex.customname.storage.StorageManager;
-import net.minex.customname.storage.StoredItem;
-import net.minex.customname.matching.ItemFingerprint;
+import net.minex.itemnamechanger.storage.StorageManager;
+import net.minex.itemnamechanger.storage.StoredItem;
+import net.minex.itemnamechanger.matching.ItemFingerprint;
 
 public class CustomNameManager {
 
@@ -24,7 +24,7 @@ public class CustomNameManager {
     public static boolean DEBUG = false;
 
     /**
-     * Creates a styled Text from a §-formatted string.
+     * Creates a styled Text from a section-sign-formatted string.
      * Supports multiple inline formatting codes.
      */
     public static Component createStyledText(String formatted) {
@@ -75,7 +75,7 @@ public class CustomNameManager {
                 if (underline) chunk = chunk.withStyle(ChatFormatting.UNDERLINE);
                 if (strikethrough) chunk = chunk.withStyle(ChatFormatting.STRIKETHROUGH);
                 if (obfuscated) chunk = chunk.withStyle(ChatFormatting.OBFUSCATED);
-                
+
                 if (result == null) {
                     result = chunk;
                 } else {
@@ -133,19 +133,11 @@ public class CustomNameManager {
             return null;
         }
         Component customName = stack.get(DataComponents.CUSTOM_NAME);
-        // Note: For actual NBT name, getting the formatted string involves serializing.
-        // We only return the literal string from the top level text if it doesn't have siblings
-        // Actually, since 1.20, getString() gets the plain text.
         return customName != null ? getRawFormattedString(customName) : null;
     }
 
     private static String getRawFormattedString(Component text) {
-        // Since we might need the § codes back if we read directly from item stack...
-        // For simplicity, we just use getString() if no better option, or rely on storage for accurate restore.
-        // But to be complete, one might visit the text components. 
-        // Here we just use what was in the original code, but since original stripped § codes, 
-        // it only ever returned unformatted text!
-        return text.getString(); 
+        return text.getString();
     }
 
     public static void applyName(ItemStack stack, String name) {

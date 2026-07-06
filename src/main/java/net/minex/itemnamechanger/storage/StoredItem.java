@@ -1,4 +1,4 @@
-package net.minex.customname.storage;
+package net.minex.itemnamechanger.storage;
 
 import java.util.List;
 
@@ -11,7 +11,6 @@ public class StoredItem {
     public List<String> lore;
 
     public StoredItem() {
-        // Default constructor for Gson
     }
 
     public StoredItem(String name, List<String> lore) {

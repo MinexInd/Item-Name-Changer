@@ -1,18 +1,18 @@
-package net.minex.customname.gui;
+package net.minex.itemnamechanger.gui;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
-import net.minex.customname.core.CustomNameManager;
-import net.minex.customname.matching.ItemFingerprint;
-import net.minex.customname.storage.StorageManager;
-import net.minex.customname.storage.StoredItem;
+import net.minex.itemnamechanger.core.CustomNameManager;
+import net.minex.itemnamechanger.matching.ItemFingerprint;
+import net.minex.itemnamechanger.storage.StorageManager;
+import net.minex.itemnamechanger.storage.StoredItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,26 +40,21 @@ public class ItemEditorScreen extends Screen {
     private final String fingerprint;
     private boolean dataLoaded = false;
 
-    // Layout
     private int panelX;
     private int innerW;
     private int contentH;
     private int startY;
 
-    // Name
     private EditBox nameField;
     private String savedNameText = "";
     private int focusedTicks = 0;
     private EditBox lastFocusedField = null;
 
-    // Lore
     private final List<LoreLine> loreLines = new ArrayList<>();
     private int loreScroll = 0;
 
-    // Color hover
     private int colorHover = -1;
 
-    // Layout coords
     private int previewY;
     private int previewH;
     private int nameFieldY;
@@ -72,9 +67,8 @@ public class ItemEditorScreen extends Screen {
     private int paletteY;
     private int bottomBtnY;
 
-    // Inline format buttons
     private static final String[] FMT_CODES  = {"&l", "&o", "&n", "&m", "&k", "&r"};
-    private static final String[] FMT_LABELS = {"§lB", "§oI", "§nU", "§mS", "§kO", "r"};
+    private static final String[] FMT_LABELS = {"\u00A7lB", "\u00A7oI", "\u00A7nU", "\u00A7mS", "\u00A7kO", "r"};
     private int fmtBtnX, fmtBtnY;
 
     public ItemEditorScreen(Screen parent, ItemStack itemStack) {
@@ -96,7 +90,6 @@ public class ItemEditorScreen extends Screen {
         innerW = PANEL_W - PAD * 2;
         int fx = panelX + PAD;
 
-        // Calculate preview height dynamically
         String dn = nameField != null ? nameField.getValue() : savedNameText;
         if (dn == null) dn = "";
         int previewLines = 0;
@@ -108,7 +101,6 @@ public class ItemEditorScreen extends Screen {
         }
         if (previewH < 40) previewH = 40;
 
-        // Calculate heights
         int rPreview = 28;
         int rPreviewEnd = rPreview + previewH + 8;
         int rNameField = rPreviewEnd + 4;
@@ -136,7 +128,6 @@ public class ItemEditorScreen extends Screen {
         paletteY = startY + rPalette;
         bottomBtnY = startY + rBottomBtn;
 
-        // Name field
         nameField = new EditBox(font, fx + 1, nameFieldY + 1, innerW - 2, 18, Component.empty());
         nameField.setMaxLength(255);
         nameField.setBordered(false);
@@ -145,15 +136,12 @@ public class ItemEditorScreen extends Screen {
 
         buildLoreWidgets();
 
-        // Add Lore button
         Button addBtn = Button.builder(Component.literal("+ Add Lore Line"), b -> addLoreLine()).bounds(fx, addBtnY, 120, 20).build();
         addRenderableWidget(addBtn);
 
-        // Format buttons
         fmtBtnX = fx + 150;
         fmtBtnY = paletteY;
 
-        // Action buttons
         int bw = 80;
         int totalBw = bw * 3 + 12;
         int bx = fx + (innerW - totalBw) / 2;
@@ -213,7 +201,7 @@ public class ItemEditorScreen extends Screen {
             addWidget(ll.field);
 
             int bx = fx + fieldW + 4;
-            ll.removeBtn = Button.builder(Component.literal("§cX"), btn -> removeLoreLine(ll.index)).bounds(bx, y, rmW, 18).build();
+            ll.removeBtn = Button.builder(Component.literal("\u00A7cX"), btn -> removeLoreLine(ll.index)).bounds(bx, y, rmW, 18).build();
             addRenderableWidget(ll.removeBtn);
         }
     }
@@ -251,20 +239,19 @@ public class ItemEditorScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        double mx = click.x(), my = click.y();
+        double mouseX = click.x();
+        double mouseY = click.y();
         int fx = panelX + PAD;
 
-        // Color palette
         int palW = COLS * (COL_SW + COL_GAP);
-        if (mx >= fx && mx < fx + palW && my >= paletteY && my < paletteY + 2 * (COL_SW + COL_GAP)) {
-            pickColor(mx, my, fx, paletteY);
+        if (mouseX >= fx && mouseX < fx + palW && mouseY >= paletteY && mouseY < paletteY + 2 * (COL_SW + COL_GAP)) {
+            pickColor(mouseX, mouseY, fx, paletteY);
             return true;
         }
 
-        // Format buttons
         for (int i = 0; i < FMT_CODES.length; i++) {
             int bx = fmtBtnX + i * 20;
-            if (mx >= bx && mx < bx + 18 && my >= fmtBtnY && my < fmtBtnY + 18) {
+            if (mouseX >= bx && mouseX < bx + 18 && mouseY >= fmtBtnY && mouseY < fmtBtnY + 18) {
                 insertCode(FMT_CODES[i]);
                 return true;
             }
@@ -297,43 +284,34 @@ public class ItemEditorScreen extends Screen {
         };
     }
 
-    // ========== RENDER ==========
-
     @Override
-    public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
         int fx = panelX + PAD;
 
-        // Panel Background
         ctx.fill(panelX, 0, panelX + PANEL_W, height, 0xF010101C);
-        // Border lines
         ctx.fill(panelX, 0, panelX + 1, height, 0xFF4444CC);
         ctx.fill(panelX + PANEL_W - 1, 0, panelX + PANEL_W, height, 0xFF4444CC);
 
-        // Title
-        ctx.drawCenteredString(font, "§l§fItem Editor", panelX + PANEL_W / 2, startY - 12, 0xFFFFFFFF);
+        ctx.centeredText(font, "\u00A7l\u00A7fItem Editor", panelX + PANEL_W / 2, startY - 12, 0xFFFFFFFF);
 
-        // ===== LIVE PREVIEW =====
         renderPreview(ctx);
 
-        // ===== NAME SECTION =====
-        ctx.drawString(font, "§bName", fx, nameFieldY - 12, 0xFF88BBFF);
+        ctx.text(font, "\u00A7bName", fx, nameFieldY - 12, 0xFF88BBFF);
         drawFieldBg(ctx, nameField);
 
-        // ===== LORE SECTION =====
-        ctx.drawString(font, "§bLore §8(" + loreLines.size() + " lines)", fx, loreLabelY, 0xFF88BBFF);
+        ctx.text(font, "\u00A7bLore \u00A78(" + loreLines.size() + " lines)", fx, loreLabelY, 0xFF88BBFF);
         ctx.fill(fx, loreAreaY, fx + innerW, loreAreaEndY, 0xFF141420);
         ctx.fill(fx, loreAreaY, fx + innerW, loreAreaY + 1, 0xFF333355);
         ctx.fill(fx, loreAreaEndY - 1, fx + innerW, loreAreaEndY, 0xFF333355);
 
         if (loreLines.isEmpty()) {
-            ctx.drawCenteredString(font, "§8No lore lines yet", panelX + PANEL_W / 2, loreAreaY + loreAreaH / 2 - 4, 0xFF555555);
+            ctx.centeredText(font, "\u00A78No lore lines yet", panelX + PANEL_W / 2, loreAreaY + loreAreaH / 2 - 4, 0xFF555555);
         }
 
         for (LoreLine ll : loreLines) {
             if (ll.field != null) drawFieldBg(ctx, ll.field);
         }
 
-        // Scroll bar
         if (loreLines.size() > LORE_VISIBLE) {
             int sbX = fx + innerW;
             ctx.fill(sbX, loreAreaY + 1, sbX + 6, loreAreaEndY - 1, 0xFF1A1A28);
@@ -343,12 +321,10 @@ public class ItemEditorScreen extends Screen {
             ctx.fill(sbX + 1, thumbY, sbX + 5, thumbY + thumbH, 0xFF7777BB);
         }
 
-        // Palette
-        ctx.drawString(font, "§7Insert Color Code:", fx, paletteLabelY, 0xFF888888);
+        ctx.text(font, "\u00A77Insert Color Code:", fx, paletteLabelY, 0xFF888888);
         drawPalette(ctx, fx, paletteY, mouseX, mouseY);
 
-        // Format buttons
-        ctx.drawString(font, "§7Style:", fmtBtnX, paletteLabelY, 0xFF888888);
+        ctx.text(font, "\u00A77Style:", fmtBtnX, paletteLabelY, 0xFF888888);
         for (int i = 0; i < FMT_CODES.length; i++) {
             int bx = fmtBtnX + i * 20;
             boolean hovered = mouseX >= bx && mouseX < bx + 18 && mouseY >= fmtBtnY && mouseY < fmtBtnY + 18;
@@ -357,72 +333,64 @@ public class ItemEditorScreen extends Screen {
             ctx.fill(bx, fmtBtnY + 17, bx + 18, fmtBtnY + 18, 0xFF555555);
             ctx.fill(bx, fmtBtnY, bx + 1, fmtBtnY + 18, 0xFF555555);
             ctx.fill(bx + 17, fmtBtnY, bx + 18, fmtBtnY + 18, 0xFF555555);
-            ctx.drawCenteredString(font, FMT_LABELS[i], bx + 9, fmtBtnY + 5, 0xFFFFFFFF);
+            ctx.centeredText(font, FMT_LABELS[i], bx + 9, fmtBtnY + 5, 0xFFFFFFFF);
         }
 
-        super.render(ctx, mouseX, mouseY, delta);
+        super.extractRenderState(ctx, mouseX, mouseY, delta);
 
-        // Draw custom text fields
         renderCustomTextFields(ctx);
 
-        // Tooltip
         if (colorHover >= 0) {
             String cn = COLORS[colorHover].getName() + " (&" + getColorCode(COLORS[colorHover]) + ")";
             ctx.fill(mouseX + 10, mouseY - 14, mouseX + 16 + font.width(cn), mouseY - 2, 0xEE000000);
-            ctx.drawString(font, cn, mouseX + 13, mouseY - 12, 0xFFFFFFFF);
+            ctx.text(font, cn, mouseX + 13, mouseY - 12, 0xFFFFFFFF);
         }
     }
 
-    private void renderPreview(GuiGraphics ctx) {
+    private void renderPreview(GuiGraphicsExtractor ctx) {
         int prX = panelX + PAD;
         int prY = previewY;
         int prW = innerW;
 
-        ctx.drawString(font, "§bLive Preview", prX, prY - 16, 0xFF88BBFF);
+        ctx.text(font, "\u00A7bLive Preview", prX, prY - 16, 0xFF88BBFF);
 
         String dn = nameField.getValue().isEmpty() ? strip(itemStack.getHoverName().getString()) : nameField.getValue();
-        dn = dn.replace("&", "§");
+        dn = dn.replace("&", "\u00A7");
 
         List<String> renderedLore = new ArrayList<>();
         for (LoreLine ll : loreLines) {
             String lt = (ll.field != null && !ll.field.getValue().isEmpty()) ? ll.field.getValue() : ll.savedText;
             if (!lt.isEmpty()) {
-                renderedLore.add(lt.replace("&", "§"));
+                renderedLore.add(lt.replace("&", "\u00A7"));
             }
         }
 
         int tooltipH = 28 + renderedLore.size() * 12;
         int tooltipW = prW;
 
-        // Background
         ctx.fill(prX, prY, prX + tooltipW, prY + tooltipH, 0xDD100010);
-        // Border
         ctx.fill(prX - 1, prY - 1, prX + tooltipW + 1, prY, 0xFF3300AA);
         ctx.fill(prX - 1, prY + tooltipH, prX + tooltipW + 1, prY + tooltipH + 1, 0xFF3300AA);
         ctx.fill(prX - 1, prY, prX, prY + tooltipH, 0xFF3300AA);
         ctx.fill(prX + tooltipW, prY, prX + tooltipW + 1, prY + tooltipH, 0xFF3300AA);
 
-        // Item icon
-        ctx.renderItem(itemStack, prX + 4, prY + 4);
+        ctx.item(itemStack, prX + 4, prY + 4);
 
-        // Name text
-        ctx.drawString(font, CustomNameManager.createStyledText(dn), prX + 24, prY + 8, 0xFFFFFFFF, false);
+        ctx.text(font, CustomNameManager.createStyledText(dn), prX + 24, prY + 8, 0xFFFFFFFF, false);
 
-        // Lore lines
         int lpY = prY + 24;
         for (int i = 0; i < renderedLore.size(); i++) {
-            ctx.drawString(font, CustomNameManager.createStyledText(renderedLore.get(i)), prX + 4, lpY + i * 12, 0xFFFFFFFF, false);
+            ctx.text(font, CustomNameManager.createStyledText(renderedLore.get(i)), prX + 4, lpY + i * 12, 0xFFFFFFFF, false);
         }
     }
 
-    private void renderCustomTextFields(GuiGraphics ctx) {
-        // Name field
+    private void renderCustomTextFields(GuiGraphicsExtractor ctx) {
         if (nameField != null) {
             int textY = nameField.getY() + 5;
             String text = nameField.getValue();
             if (!text.isEmpty() || nameField.isFocused()) {
                 int color = nameField.isFocused() ? 0xFFE0E0E0 : 0xFFAAAAAA;
-                ctx.drawString(font, text, nameField.getX() + 4, textY, color, false);
+                ctx.text(font, text, nameField.getX() + 4, textY, color, false);
             }
             if (nameField.isFocused() && (focusedTicks / 6) % 2 == 0) {
                 int cursorPos = nameField.getCursorPosition();
@@ -431,18 +399,17 @@ public class ItemEditorScreen extends Screen {
                 ctx.fill(cx, nameField.getY() + 4, cx + 1, nameField.getY() + 14, 0xFFFFFFFF);
             }
             if (text.isEmpty() && !nameField.isFocused()) {
-                ctx.drawString(font, "§7Type item name...", nameField.getX() + 4, textY, 0xFF555555);
+                ctx.text(font, "\u00A77Type item name...", nameField.getX() + 4, textY, 0xFF555555);
             }
         }
 
-        // Lore fields
         for (LoreLine ll : loreLines) {
             if (ll.field == null) continue;
             int ly = ll.field.getY() + 5;
             String text = ll.field.getValue();
             if (!text.isEmpty() || ll.field.isFocused()) {
                 int color = ll.field.isFocused() ? 0xFFE0E0E0 : 0xFFAAAAAA;
-                ctx.drawString(font, text, ll.field.getX() + 4, ly, color, false);
+                ctx.text(font, text, ll.field.getX() + 4, ly, color, false);
             }
             if (ll.field.isFocused() && (focusedTicks / 6) % 2 == 0) {
                 int cursorPos = ll.field.getCursorPosition();
@@ -451,12 +418,12 @@ public class ItemEditorScreen extends Screen {
                 ctx.fill(cx, ll.field.getY() + 4, cx + 1, ll.field.getY() + 14, 0xFFFFFFFF);
             }
             if (text.isEmpty() && !ll.field.isFocused()) {
-                ctx.drawString(font, "§7Line " + (ll.index + 1) + "...", ll.field.getX() + 4, ly, 0xFF555555);
+                ctx.text(font, "\u00A77Line " + (ll.index + 1) + "...", ll.field.getX() + 4, ly, 0xFF555555);
             }
         }
     }
 
-    private void drawFieldBg(GuiGraphics ctx, EditBox field) {
+    private void drawFieldBg(GuiGraphicsExtractor ctx, EditBox field) {
         int x = field.getX() - 2;
         int y = field.getY() - 2;
         int w = field.getWidth() + 4;
@@ -468,7 +435,7 @@ public class ItemEditorScreen extends Screen {
         ctx.fill(x + w - 1, y, x + w, y + h, 0xFF555555);
     }
 
-    private void drawPalette(GuiGraphics ctx, int sx, int sy, int mx, int my) {
+    private void drawPalette(GuiGraphicsExtractor ctx, int sx, int sy, int mx, int my) {
         colorHover = -1;
         for (int i = 0; i < COLORS.length; i++) {
             int c = i % COLS, r = i / COLS;
@@ -480,8 +447,6 @@ public class ItemEditorScreen extends Screen {
         }
     }
 
-    // ========== DATA ==========
-
     private void loadFromStorage() {
         loreLines.clear();
         savedNameText = "";
@@ -489,12 +454,12 @@ public class ItemEditorScreen extends Screen {
         StoredItem stored = StorageManager.getItem(fingerprint);
         if (stored != null) {
             if (stored.getName() != null && !stored.getName().isEmpty()) {
-                savedNameText = stored.getName().replace("§", "&");
+                savedNameText = stored.getName().replace("\u00A7", "&");
             }
             if (stored.getLore() != null) {
                 for (int i = 0; i < stored.getLore().size(); i++) {
                     LoreLine ll = new LoreLine(i);
-                    ll.savedText = stored.getLore().get(i).replace("§", "&");
+                    ll.savedText = stored.getLore().get(i).replace("\u00A7", "&");
                     loreLines.add(ll);
                 }
             }
@@ -526,18 +491,18 @@ public class ItemEditorScreen extends Screen {
         String nt = nameField.getValue().trim();
 
         if (!nt.isEmpty()) {
-            String fmt = nt.replace("&", "§");
+            String fmt = nt.replace("&", "\u00A7");
             CustomNameManager.applyName(fmt);
         }
 
         List<String> fl = new ArrayList<>();
         for (LoreLine ll : loreLines) {
             String t = ll.field != null ? ll.field.getValue().trim() : ll.savedText.trim();
-            if (!t.isEmpty()) fl.add(t.replace("&", "§"));
+            if (!t.isEmpty()) fl.add(t.replace("&", "\u00A7"));
         }
         if (!fl.isEmpty()) CustomNameManager.applyLore(fl);
 
-        String store = nt.isEmpty() ? null : nt.replace("&", "§");
+        String store = nt.isEmpty() ? null : nt.replace("&", "\u00A7");
         StorageManager.storeItem(fp, store, fl.isEmpty() ? null : fl);
         onClose();
     }
@@ -553,7 +518,7 @@ public class ItemEditorScreen extends Screen {
         onClose();
     }
 
-    private static String strip(String t) { return t == null ? "" : t.replaceAll("§.", ""); }
+    private static String strip(String t) { return t == null ? "" : t.replaceAll("\u00A7.", ""); }
 
     private static int colVal(ChatFormatting f) {
         return switch (f) {

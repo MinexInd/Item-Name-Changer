@@ -1,4 +1,4 @@
-package net.minex.customname.keybinding;
+package net.minex.itemnamechanger.keybinding;
 
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -8,11 +8,11 @@ import org.lwjgl.glfw.GLFW;
 public class ModKeyBindings {
 
     private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(
-        Identifier.fromNamespaceAndPath("itemnamechanger", "main")
+        Identifier.fromNamespaceAndPath("item-name-changer", "main")
     );
 
     public static final KeyMapping OPEN_GUI = new KeyMapping(
-        "key.itemnamechanger.opengui",
+        "key.item-name-changer.opengui",
         InputConstants.Type.KEYSYM,
         GLFW.GLFW_KEY_G,
         CATEGORY

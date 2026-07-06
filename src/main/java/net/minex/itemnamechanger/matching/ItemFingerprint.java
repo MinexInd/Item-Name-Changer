@@ -1,4 +1,4 @@
-package net.minex.customname.matching;
+package net.minex.itemnamechanger.matching;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -10,7 +10,6 @@ import net.minecraft.core.Holder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 public class ItemFingerprint {
 

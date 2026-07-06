@@ -1,14 +1,14 @@
-package net.minex.customname.restore;
+package net.minex.itemnamechanger.restore;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
-import net.minex.customname.core.CustomNameManager;
-import net.minex.customname.matching.ItemFingerprint;
-import net.minex.customname.storage.StorageManager;
-import net.minex.customname.storage.StoredItem;
+import net.minex.itemnamechanger.core.CustomNameManager;
+import net.minex.itemnamechanger.matching.ItemFingerprint;
+import net.minex.itemnamechanger.storage.StorageManager;
+import net.minex.itemnamechanger.storage.StoredItem;
 
 import java.util.List;
 
