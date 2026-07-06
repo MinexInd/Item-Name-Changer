@@ -1,19 +1,12 @@
-# Item Name Changer (v1.2)
+# Item Name Changer (v1.3)
 
 A lightweight Fabric mod that lets players rename and customize their items with **powerful commands AND a brand-new GUI editor** — no anvils or experience required!
 
 ---
 
-## ✨ What’s New in v1.2
+## ✨ What’s New in v1.3
 
-🔥 **Brand New GUI Editor**
-![Gui Showcase](https://cdn.modrinth.com/data/cached_images/3748a11d2e5afac29d8586a0a501d54d875477f8.png)
-- Fully interactive item editor
-- Edit item name and lore visually
-- Built-in **color picker**
-- Formatting buttons (**Bold, Italic, Underline, Strikethrough**)
-- Live **preview system**
-- Clean and intuitive layout
+![Replace this with a description](https://cdn.modrinth.com/data/cached_images/c17c28cf65b5b860be633dcd02a6b8588f26315b.png)
 
 📝 **Lore Editing Support**
 - Add, remove, and edit multiple lore lines
