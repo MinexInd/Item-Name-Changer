@@ -284,6 +284,16 @@ public class ItemEditorScreen extends Screen {
         };
     }
 
+    private String getColorName(ChatFormatting f) {
+        return switch (f) {
+            case BLACK -> "Black"; case DARK_BLUE -> "Dark Blue"; case DARK_GREEN -> "Dark Green"; case DARK_AQUA -> "Dark Aqua";
+            case DARK_RED -> "Dark Red"; case DARK_PURPLE -> "Dark Purple"; case GOLD -> "Gold"; case GRAY -> "Gray";
+            case DARK_GRAY -> "Dark Gray"; case BLUE -> "Blue"; case GREEN -> "Green"; case AQUA -> "Aqua";
+            case RED -> "Red"; case LIGHT_PURPLE -> "Light Purple"; case YELLOW -> "Yellow"; case WHITE -> "White";
+            default -> "Unknown";
+        };
+    }
+
     @Override
     public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
         int fx = panelX + PAD;
@@ -341,7 +351,7 @@ public class ItemEditorScreen extends Screen {
         renderCustomTextFields(ctx);
 
         if (colorHover >= 0) {
-            String cn = COLORS[colorHover].getName() + " (&" + getColorCode(COLORS[colorHover]) + ")";
+            String cn = getColorName(COLORS[colorHover]) + " (&" + getColorCode(COLORS[colorHover]) + ")";
             ctx.fill(mouseX + 10, mouseY - 14, mouseX + 16 + font.width(cn), mouseY - 2, 0xEE000000);
             ctx.text(font, cn, mouseX + 13, mouseY - 12, 0xFFFFFFFF);
         }
@@ -532,7 +542,7 @@ public class ItemEditorScreen extends Screen {
     }
 
     @Override
-    public void onClose() { if (minecraft != null) minecraft.setScreen(parent); }
+    public void onClose() { 		if (minecraft != null) minecraft.gui.setScreen(parent); }
 
     private static class LoreLine {
         int index;

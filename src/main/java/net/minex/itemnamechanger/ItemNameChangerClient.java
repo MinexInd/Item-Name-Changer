@@ -31,7 +31,7 @@ public class ItemNameChangerClient implements ClientModInitializer {
 		while (ModKeyBindings.OPEN_GUI.consumeClick()) {
 			var stack = CustomNameManager.getHeldItem();
 			if (!stack.isEmpty()) {
-				client.setScreen(new ItemEditorScreen(client.screen, stack));
+				client.gui.setScreen(new ItemEditorScreen(client.gui.screen(), stack));
 			}
 		}
 	}

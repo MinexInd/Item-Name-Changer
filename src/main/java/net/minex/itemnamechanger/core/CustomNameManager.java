@@ -53,7 +53,7 @@ public class CustomNameManager {
 
             ChatFormatting f = getFormatting(code);
             if (f != null) {
-                if (f.isColor()) {
+                if (isColor(f)) {
                     currentColor = f;
                     bold = italic = underline = strikethrough = obfuscated = false;
                 } else if (f == ChatFormatting.BOLD) bold = true;
@@ -111,6 +111,14 @@ public class CustomNameManager {
             case 'k' -> ChatFormatting.OBFUSCATED;
             case 'r' -> ChatFormatting.RESET;
             default -> null;
+        };
+    }
+
+    private static boolean isColor(ChatFormatting f) {
+        return switch (f) {
+            case BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY,
+                 DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE -> true;
+            default -> false;
         };
     }
 
