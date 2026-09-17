@@ -3,7 +3,6 @@ package net.minex.itemnamechanger.keybinding;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
 
 public class ModKeyBindings {
 
@@ -13,8 +12,8 @@ public class ModKeyBindings {
 
     public static final KeyMapping OPEN_GUI = new KeyMapping(
         "key.item-name-changer.opengui",
-        InputConstants.Type.KEYSYM,
-        GLFW.GLFW_KEY_G,
+        InputConstants.Type.KEYBOARD,
+        InputConstants.KEY_G,
         CATEGORY
     );
 }
